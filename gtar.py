@@ -4,20 +4,26 @@ import pyaudio
 import numpy
 import wave
 import time
+import sys
 
-def freq(frames):
-    frame_array = numpy.array(wave.struct.unpack("%dh" % (len(frames) / 2), frames)) * numpy.blackman(1024) 
+
+def freq(frames, sampling_frequency=44100, frames_per_buffer=1024):
+
+    # unpack wave and multiply by the window
+    frame_array = numpy.array(wave.struct.unpack("%dh" % (len(frames) / 2), frames)) * numpy.blackman(frames_per_buffer) 
+    # calculate fft and maximum
     fftout = abs(numpy.fft.rfft(frame_array)) ** 2
     maximum = fftout[1:].argmax() + 1
 
     if maximum != len(fftout) - 1:
-        y0, y1, y2 = numpy.log(fftout[maximum - 1 : maximum + 2 : ])
-        x1 = (y2 - y0) * .5 / (2 * y1 - y2 - y0)
-        result = (maximum + x1) * 44100 / 1024
-        print result
+        y0, y1, y2 = numpy.log(fftout[(maximum - 1):(maximum + 2):])
+        x1 = (y2 - y0) * 0.5 / (2 * y1 - y2 - y0)
+        result = (maximum + x1) * sampling_frequency / frames_per_buffer
     else:
-        result = maximum*44100/1024
-        print result
+        result = maximum * sampling_frequency / frames_per_buffer
+
+    return result
+
 
 def main():
     audio = pyaudio.PyAudio()
@@ -27,19 +33,12 @@ def main():
             input=True, 
             frames_per_buffer=1024)
 
-
-
-    wf = wave.open('./tests/10kHz_44100Hz_16bit_05s', 'rb')
-    print freq(wf.readframes(1024))
-    
-
-    '''
+    sys.stdout.write('\n')
     while(True):
         buff = stream.read(1024)
-        buff = wf.readframes(2048)
-        print freq(buff)
+        sys.stdout.write( '\r' + str(freq(buff, 48000, 1024)) )
+        sys.stdout.flush()
         time.sleep(1)
-    '''
 
 
     stream.stop_stream()
