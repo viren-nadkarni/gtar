@@ -5,6 +5,7 @@ import numpy
 import wave
 import time
 import sys
+from pprint import pprint
 
 
 tunings = {
@@ -18,10 +19,10 @@ tunings = {
         ]
 }
 
-audio_channels = 1
-audio_rate = 48000
-audio_frames_per_buffer = 1024
-audio_sampling_delay = 0.25
+AUDIO_CHANNELS = 1
+AUDIO_SAMP_FREQ = 48000
+AUDIO_FRAMES_PER_BUFFER = 1024
+AUDIO_SAMP_DELAY = 0.5
 
 
 def freq(frames, sampling_frequency=44100, frames_per_buffer=1024):
@@ -45,17 +46,18 @@ def freq(frames, sampling_frequency=44100, frames_per_buffer=1024):
 def main():
     audio = pyaudio.PyAudio()
     stream = audio.open(format=pyaudio.paInt16,
-            channels=audio_channels,
-            rate=audio_rate,
+            channels=AUDIO_CHANNELS,
+            rate=AUDIO_SAMP_FREQ,
             input=True, 
-            frames_per_buffer=audio_frames_per_buffer)
+            frames_per_buffer=AUDIO_FRAMES_PER_BUFFER)
 
-    sys.stdout.write('\n')
+    pprint(tunings['standard'])
+    print
     while(True):
-        buff = stream.read(audio_frames_per_buffer)
-        sys.stdout.write( '\r' + str(freq(buff, audio_channels, audio_frames_per_buffer)) )
+        buff = stream.read(AUDIO_FRAMES_PER_BUFFER)
+        sys.stdout.write( '\r' + str(freq(buff, AUDIO_SAMP_FREQ, AUDIO_FRAMES_PER_BUFFER)) )
         sys.stdout.flush()
-        time.sleep(audio_sampling_delay)
+        time.sleep(AUDIO_SAMP_DELAY)
 
     stream.stop_stream()
     stream.close()
